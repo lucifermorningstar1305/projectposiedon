@@ -84,9 +84,11 @@ if __name__ == "__main__":
         st.image(ref_img_bytes)
         with st.spinner("Processing ...."):
             d_pos, d_neg = get_dists(ref_img, pos_img, neg_img)
+        
+        if np.abs(d_pos - d_neg) < 1:
+            st.warning(f"No record of this image exists. Perhaps an anomaly!")
 
-        print(d_pos, d_neg, 1/(1 + d_pos), 1/(1 + d_neg))
-        if d_pos < d_neg:
+        elif d_pos < d_neg:
             st.info(f"It is a **{pos_label}**")
 
         else:

@@ -1,3 +1,7 @@
 **/data/
 **/__pycache__/
 **/models/
+**/anomaly_imgs/
+**/dumps/
+**/flagged/
+**/reference_imgs/
