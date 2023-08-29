@@ -5,3 +5,4 @@
 **/dumps/
 **/flagged/
 **/reference_imgs/
+**/*.backup

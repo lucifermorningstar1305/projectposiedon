@@ -9,6 +9,7 @@ import os
 
 from PIL import Image, ImageDraw
 from models import SiameseNetwork
+from sklearn.metrics.pairwise import cosine_similarity
 from glob import glob
 
 
@@ -69,11 +70,12 @@ def img_classify(input_img: Image) -> str:
 
     
     img_embeddings = get_image_embeddings(ref_imgs)
-    distance = np.sqrt(np.power(input_img_embedding - img_embeddings, 2)).sum(axis=1)
+    dist = np.sqrt(np.power(input_img_embedding - img_embeddings, 2)).sum(axis=1)
+    print(cosine_similarity(input_img_embedding, img_embeddings))
     
-    print(distance)
+    print(dist)
 
-    idx = np.argmin(distance)
+    idx = np.argmin(dist)
     i = len(glob(f"./dumps/{labels[idx]}*"))
     fn = f"{labels[idx]}.jpg" if i == 0 else f"{labels[idx]}_{i}.jpg"
     input_img.save(os.path.join("./dumps", fn))
