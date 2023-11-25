@@ -7,10 +7,33 @@ import lightning.pytorch as pl
 import transformers
 import os
 
+import onnx
+import onnxruntime as ort
+
 from PIL import Image, ImageDraw
 from models import SiameseNetwork
 from sklearn.metrics.pairwise import cosine_similarity
 from glob import glob
+
+
+def get_image_embeddings_onnx(image: Image.Image | List[Image.Image]) -> np.ndarray:
+    """
+    Function to return the image embeddings of an image.
+
+    :param image: RGB image(s)
+    
+    :returns: image_embeddings
+    """
+
+    preprocessor = transformers.ViTImageProcessor.from_pretrained("google/vit-base-patch16-224")
+    inputs = preprocessor(image, return_tensors="pt")
+
+    ort_sess = ort.InferenceSession("./inference_model/similarity_model.onnx")
+    input_name = ort_sess.get_inputs()[0].name
+    ort_inputs = {input_name: inputs["pixel_values"].numpy()}
+    ort_outs = ort_sess.run(None, ort_inputs)
+    return ort_outs
+
 
 
 def get_image_embeddings(image: Image.Image | List[Image.Image]) -> np.ndarray:
@@ -60,7 +83,7 @@ def img_classify(input_img: Image) -> str:
 
     labels = [img_path.split("/")[-1].split(".")[0] for img_path in reference_imgs]
 
-    input_img_embedding = get_image_embeddings(input_img.resize((224, 224), resample=Image.Resampling.BILINEAR))
+    input_img_embedding = get_image_embeddings_onnx(input_img.resize((224, 224), resample=Image.Resampling.BILINEAR))[-1] # Since the last element of the list represents the pooler output
     
     ref_imgs = list()
     
@@ -69,7 +92,7 @@ def img_classify(input_img: Image) -> str:
         ref_imgs.append(img.convert("RGB").resize((224, 224), resample=Image.Resampling.BILINEAR))
 
     
-    img_embeddings = get_image_embeddings(ref_imgs)
+    img_embeddings = get_image_embeddings_onnx(ref_imgs)[-1]
     dist = np.sqrt(np.power(input_img_embedding - img_embeddings, 2)).sum(axis=1)
     print(cosine_similarity(input_img_embedding, img_embeddings))
     

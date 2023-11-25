@@ -6,3 +6,4 @@
 **/flagged/
 **/reference_imgs/
 **/*.backup
+**/inference_model/
